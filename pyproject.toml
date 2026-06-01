@@ -1,0 +1,22 @@
+[project]
+name = "iron-emperor"
+version = "1.0.0"
+description = "焊武帝 IronEmperor — 自然语言转硬件方案，直连立创商城，支持 Claude + DeepSeek"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    {name = "Heng Yao"}
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+python_files = "test_*.py"
+python_classes = "Test*"
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+reportMissingImports = false
+reportMissingModuleSource = false
+pythonVersion = "3.12"

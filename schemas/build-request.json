@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thehengyao/iron-emperor/schemas/build-request.json",
+  "title": "BuildRequest",
+  "description": "Input schema for hardware build pipeline",
+  "type": "object",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "description": "Natural language hardware project description",
+      "examples": ["自动驾驶无人机", "比特币提醒器", "自动喂猫器"]
+    }
+  }
+}

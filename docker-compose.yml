@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  hwb:
+    build: .
+    ports:
+      - "${HWB_PORT:-8000}:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HWB_MODEL=${HWB_MODEL:-claude-opus-4-6}
+      - HWB_PORT=8000
+      - HWB_HOST=0.0.0.0
+    volumes:
+      - hwb-data:/app/data
+      - hwb-output:/app/output
+      - hwb-cache:/tmp/hwb_cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  hwb-data:
+  hwb-output:
+  hwb-cache:

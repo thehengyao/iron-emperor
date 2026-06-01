@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thehengyao/iron-emperor/schemas/a2a-envelope.json",
+  "title": "A2AEnvelope",
+  "description": "Agent-to-Agent protocol message envelope",
+  "type": "object",
+  "required": ["task", "prompt"],
+  "properties": {
+    "task": {
+      "type": "string",
+      "const": "hardware_build",
+      "description": "Task identifier — must match a capability from /a2a/discover"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Natural language project description"
+    },
+    "callback_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional webhook for async result delivery (POST with A2A response)"
+    },
+    "context": {
+      "type": "object",
+      "description": "Opaque context from the calling agent, returned unchanged in response",
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thehengyao/iron-emperor/schemas/build-response.json",
+  "title": "BuildResponse",
+  "description": "Output schema for hardware build pipeline",
+  "type": "object",
+  "required": ["status", "project"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ready", "error"],
+      "description": "Pipeline completion status"
+    },
+    "project": {
+      "type": "object",
+      "required": ["prompt", "bom", "pcb_design", "cad_files", "assembly", "quote", "total_cost"],
+      "properties": {
+        "prompt": { "type": "string" },
+        "requirements": {
+          "type": "object",
+          "properties": {
+            "project_name": { "type": "string" },
+            "target_audience": { "type": "string" },
+            "key_components": { "type": "array", "items": { "type": "string" } },
+            "complexity": { "type": "string", "enum": ["simple", "moderate", "advanced"] }
+          }
+        },
+        "bom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "price": { "type": "number", "description": "Unit price in CNY (立创商城)" },
+              "estimated_price": { "type": "number" },
+              "quantity": { "type": "integer", "minimum": 1 },
+              "reason": { "type": "string" },
+              "url": { "type": "string", "format": "uri" }
+            }
+          }
+        },
+        "pcb_design": {
+          "type": "object",
+          "properties": {
+            "circuit_design": {
+              "type": "object",
+              "properties": {
+                "connections": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "from": { "type": "string" },
+                      "to": { "type": "string" },
+                      "type": { "type": "string" }
+                    }
+                  }
+                },
+                "power_rails": { "type": "array", "items": { "type": "object" } }
+              }
+            },
+            "schematic_kicad": { "type": "string", "description": "KiCad .kicad_sch content" },
+            "layout": {
+              "type": "object",
+              "properties": {
+                "layers": { "type": "integer" },
+                "dimensions_mm": {
+                  "type": "object",
+                  "properties": { "width": { "type": "number" }, "height": { "type": "number" } }
+                }
+              }
+            }
+          }
+        },
+        "cad_files": {
+          "type": "array",
+          "items": { "type": "string", "description": "Path to .scad file" }
+        },
+        "assembly": {
+          "type": "object",
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "step": { "type": "integer" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            },
+            "difficulty": { "type": "string" },
+            "estimated_time_hours": { "type": "number" },
+            "tools_required": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "quote": {
+          "type": "object",
+          "properties": {
+            "breakdown": { "type": "object" },
+            "total": { "type": "number", "description": "Total cost in CNY" },
+            "currency": { "type": "string", "const": "CNY" }
+          }
+        },
+        "total_cost": { "type": "number", "description": "Total project cost in CNY" }
+      }
+    },
+    "agent_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "agent": { "type": "string" },
+          "task": { "type": "string" },
+          "status": { "type": "string" },
+          "duration_ms": { "type": "integer" },
+          "error": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
