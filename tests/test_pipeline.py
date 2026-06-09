@@ -110,7 +110,7 @@ class TestTypes:
         assert abs(item.line_total_cny - 30.0) < 0.01
 
     def test_quote_breakdown(self):
-        bd = QuoteBreakdown(parts_usd=100, pcb_fab_usd=10, platform_fee_usd=11)
+        bd = QuoteBreakdown(parts_cny=100, pcb_fab_cny=10, platform_fee_cny=11)
         assert bd.subtotal == 110
         assert bd.total == 121
 

@@ -122,13 +122,17 @@ export HWB_MODEL=deepseek-chat
 ### 构建零件数据库（立创商城）
 
 ```bash
-make scrape            # 爬取所有预设分类（需开代理，约 1 小时）
-make scrape-resume     # 断点续爬
-make scrape-keyword KW="ESP32"  # 只爬某个关键词
-make db-stats          # 查看数量
+# 先设置好 API Key，再运行爬虫
+export DEEPSEEK_API_KEY=sk-...
+export HWB_MODEL=deepseek-chat
+
+python3 src/scraper/lcsc_scraper.py           # 爬取全部 76 个预设分类（约 15 分钟）
+python3 src/scraper/lcsc_scraper.py --resume  # 断点续爬
+python3 src/scraper/lcsc_scraper.py --keyword "ESP32"  # 只爬某个关键词
+make db-stats                                 # 查看数量
 ```
 
-> 不爬也能用：DB 为空时自动切换到 LLM 估价模式。
+> 不爬也能用：DB 为空时自动切换到 LLM 估价模式。爬完后约有 **6,700+ 个真实立创商城零件**。
 
 ### 启动
 
@@ -170,6 +174,28 @@ PCB 打板 = ¥30 + 超出 25cm² 部分 × 1.5    嘉立创 5 片起
 
 ---
 
+## 实测数据（DeepSeek Chat）
+
+| 项目 | 零件数 | DB 候选 | PCB 连接数 | 报价（CNY） |
+|------|--------|---------|-----------|------------|
+| 自动定时喂猫器 | 10 | 209 | 17 | ¥104.80 |
+
+**零件数据库：** 6,741 个真实立创商城零件（76 个分类关键词）
+
+---
+
+## 测试
+
+```bash
+export DEEPSEEK_API_KEY=sk-...
+export HWB_MODEL=deepseek-chat
+python3 -m pytest tests/ -v
+```
+
+42 个测试，全部通过，耗时约 2 分钟。
+
+---
+
 ## 为什么「焊武帝」是无价的？
 
 1. **消灭选型焦虑** — 告别在立创商城 150 万种零件里的人肉搜索，AI 自动锁定匹配件
@@ -186,23 +212,42 @@ PCB 打板 = ¥30 + 超出 25cm² 部分 × 1.5    嘉立创 5 片起
 
 ```
 iron-emperor/
-├── src/
-│   ├── llm_client.py          # 统一 LLM 客户端（Claude + DeepSeek）
-│   ├── config.py              # 配置（env var 覆盖）
+├── src/                                    # ~2,700 行 Python
+│   ├── llm_client.py                       # 统一 LLM 客户端（Claude + DeepSeek）(84 行)
+│   ├── config.py                           # 配置（env var 覆盖）(71 行)
+│   ├── types.py                            # 类型定义 — BOMItem, PCBDesign 等 (162 行)
+│   ├── errors.py                           # 异常层级 (75 行)
+│   ├── validators.py                       # 各阶段输出校验 (117 行)
+│   ├── metrics.py                          # Agent 计时 + 缓存命中率 (84 行)
+│   ├── logger.py                           # 结构化 JSON 日志 (61 行)
+│   ├── middleware.py                       # 请求追踪 + 并发限制 (49 行)
 │   ├── agents/
-│   │   ├── orchestrator.py    # 流水线协调器
-│   │   ├── parts_agent.py     # LCSC 零件搜索 + BOM
-│   │   ├── pcb/pcb_agent.py   # PCB 三阶段设计
-│   │   ├── cad/cad_agent.py   # OpenSCAD 外壳生成
-│   │   ├── assembler/         # 组装教程
-│   │   └── quoter/            # CNY 报价（无 LLM）
-│   ├── api/server.py          # FastAPI REST + SSE + A2A
-│   ├── db/schema.py           # SQLite + FTS5
+│   │   ├── orchestrator.py                 # 流水线协调器 + JSON 修复 (325 行)
+│   │   ├── parts_agent.py                  # FTS5 搜索 + LLM 选型 + BOM (188 行)
+│   │   ├── pcb/pcb_agent.py                # PCB 三阶段设计 (122 行)
+│   │   ├── cad/cad_agent.py                # OpenSCAD 外壳生成 (152 行)
+│   │   ├── assembler/assembly_agent.py     # 组装教程 (70 行)
+│   │   └── quoter/quoter_agent.py          # CNY 报价（无 LLM）(98 行)
+│   ├── api/server.py                       # FastAPI REST + SSE + A2A (338 行)
+│   ├── db/schema.py                        # SQLite + FTS5 (90 行)
 │   └── scraper/
-│       └── lcsc_scraper.py    # 立创EDA Pro API 爬虫
-├── frontend/                  # React 19 + TypeScript + Tailwind v4
-├── tests/
-├── Makefile
+│       └── lcsc_scraper.py                 # 立创EDA Pro API 爬虫（断点续爬）(249 行)
+├── frontend/                               # ~1,100 行 TypeScript
+│   └── src/
+│       ├── App.tsx                         # 单页构建界面 (585 行)
+│       ├── components/
+│       │   ├── MatrixPanel.tsx             # Agent 活动日志面板 (121 行)
+│       │   ├── PartsGraph.tsx              # 力导向星图（Canvas 2D）(245 行)
+│       │   └── LiveGraph.tsx               # 波形动画 (91 行)
+│       └── lib/
+│           ├── api.ts                      # HTTP + SSE 流式客户端 (70 行)
+│           └── types.ts                    # TypeScript 接口定义 (47 行)
+├── schemas/                                # JSON Schema：请求/响应/A2A 协议
+├── docs/                                   # 架构文档 + A2A 协议说明
+├── tests/                                  # 34 个测试
+├── examples/                               # 示例 prompt
+├── Makefile                                # 构建自动化（17 个 target）
+├── Dockerfile                              # 多阶段容器构建
 └── requirements.txt
 ```
 
